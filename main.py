@@ -1,10 +1,11 @@
 import pygame
+import numpy as np
 
 # Initialize Pygame
 pygame.init()
 
 # Set up the display
-tam_screen = (800, 600)
+tam_screen = (1280, 600)
 screen = pygame.display.set_mode(tam_screen)
 pygame.display.set_caption('Football Head')
 
@@ -13,6 +14,13 @@ background_img = pygame.image.load('images/background.png')
 player1_img = pygame.image.load('images/player1.png')
 player2_img = pygame.image.load('images/player2.png')
 ball_img = pygame.image.load('images/ball.png')
+porteria1_img = pygame.image.load('images/porteria1.png')
+porteria2_img = pygame.image.load('images/porteria2.png')
+
+# Resize porteria
+porteria_size = (200, 250)
+porteria1_img = pygame.transform.scale(porteria1_img, porteria_size)
+porteria2_img = pygame.transform.scale(porteria2_img, porteria_size)
 
 # Resize players
 player_size = (100, 100)
@@ -30,24 +38,38 @@ background_img = pygame.transform.scale(background_img, tam_screen)
 flag_collition = 0
 
 # Set up game objects
+porteria1_rect = porteria1_img.get_rect()
+porteria1_rect.x = 0
+porteria1_rect.y = 270
+
+porteria2_rect = porteria2_img.get_rect()
+porteria2_rect.x = 1080
+porteria2_rect.y = 270
+
 player1_rect = player1_img.get_rect()
-player1_rect.x = 100
-player1_rect.y = 450
+player1_rect.x = 200
+player1_rect.y = 400
 
 player2_rect = player2_img.get_rect()
-player2_rect.x = 600
-player2_rect.y = 450
+player2_rect.x = 970
+player2_rect.y = 400
 
 ball_rect = ball_img.get_rect()
-ball_rect.x = 400
-ball_rect.y = 300
 
 # Set up game variables
-player1_speed = 5
-player2_speed = 5
+player1_speed = 1.0
+player2_speed = 1.0
 
-ball_speed_x = 5
-ball_speed_y = 5
+v0 = 80.0
+theta = 60.0
+g = 9.8
+t = 0.0
+
+x0 = 600
+y0 = 100
+
+v0x = v0 * np.cos(np.deg2rad(theta))
+v0y = v0 * np.sin(np.deg2rad(theta))
 
 # Set up game loop
 running = True
@@ -60,43 +82,55 @@ while running:
     # Move players
     keys = pygame.key.get_pressed()
     if keys[pygame.K_a]:
-        if player1_rect.x > 0:
+        if player1_rect.x > 150:
             player1_rect.x -= player1_speed
     if keys[pygame.K_d]:
-        if player1_rect.x < 700:
+        if player1_rect.x < 1030:
             player1_rect.x += player1_speed
     if keys[pygame.K_LEFT]:
-        if player2_rect.x > 0:
+        if player2_rect.x > 150:
             player2_rect.x -= player2_speed
     if keys[pygame.K_RIGHT]:
-        if player2_rect.x < 700:
+        if player2_rect.x < 1030:
             player2_rect.x += player2_speed
     
     # Move ball
-    ball_rect.x += ball_speed_x
-    ball_rect.y += ball_speed_y
+    t += 0.01
+    X = v0x * t
+    Y = v0y * t + 0.5 * g * t**2
+
+    ball_rect.x = x0 + X
+    ball_rect.y = y0 + Y
 
     # Detect collisions
-    if ball_rect.colliderect(player1_rect):
-        if flag_collition == 0:
-            ball_speed_x *= -1
-            flag_collition = 1
-    elif ball_rect.colliderect(player2_rect):
-        if flag_collition == 0:
-            ball_speed_x *= -1
-            flag_collition = 1
-    else:
-        flag_collition = 0
-    if ball_rect.top < 0 or ball_rect.bottom > tam_screen[1]:
-        ball_speed_y *= -1
-    if ball_rect.left < 0 or ball_rect.right > tam_screen[0]:
-        ball_speed_x *= -1
+    if ball_rect.bottom > tam_screen[1]-100:
+        v0y *= -1
+        t = 0.0
+        y0 = ball_rect.y
+        x0 = ball_rect.x
+    elif ball_rect.top < 0:
+        v0y *= -1
+        t = 0.0
+        y0 = ball_rect.y
+        x0 = ball_rect.x
+    elif ball_rect.right > tam_screen[0]:
+        v0x *= -1
+        t = 0.0
+        y0 = ball_rect.y
+        x0 = ball_rect.x
+    elif ball_rect.left < 0:
+        v0x *= -1
+        t = 0.0
+        y0 = ball_rect.y
+        x0 = ball_rect.x
 
     # Draw objects
     screen.blit(background_img, (0, 0))
     screen.blit(player1_img, player1_rect)
     screen.blit(player2_img, player2_rect)
     screen.blit(ball_img, ball_rect)
+    screen.blit(porteria1_img, porteria1_rect)
+    screen.blit(porteria2_img, porteria2_rect)
 
     # Update display
     pygame.display.flip()
