@@ -1,0 +1,263 @@
+import pygame
+import numpy as np
+
+# Inicializar el Pygame
+pygame.init()
+pygame.font.init()
+font = pygame.font.SysFont('Arial', 24)
+
+# Configurar la pantalla a 1280x600
+tam_screen = (1280, 600)
+screen = pygame.display.set_mode(tam_screen)
+pygame.display.set_caption('Football Head')
+
+# Cargar imagenes
+fondo_img = pygame.image.load('images/fondo.png')
+jugador1_img = pygame.image.load('images/jugador1.png')
+jugador2_img = pygame.image.load('images/jugador2.png')
+balon_img = pygame.image.load('images/balon.png')
+porteria1_img = pygame.image.load('images/porteria1.png')
+porteria2_img = pygame.image.load('images/porteria2.png')
+
+# Redimensionar imagenes
+fondo_img = pygame.transform.scale(fondo_img, tam_screen)
+jugador1_img = pygame.transform.scale(jugador1_img, (100, 100))
+jugador2_img = pygame.transform.scale(jugador2_img, (100, 100))
+balon_img = pygame.transform.scale(balon_img, (50, 50))
+porteria1_img = pygame.transform.scale(porteria1_img, (200, 250))
+porteria2_img = pygame.transform.scale(porteria2_img, (200, 250))
+
+# Establecer posiciones iniciales de los objetos
+porteria1_rect = porteria1_img.get_rect()
+porteria1_rect.x = 0
+porteria1_rect.y = 270
+
+porteria2_rect = porteria2_img.get_rect()
+porteria2_rect.x = 1080
+porteria2_rect.y = 270
+
+jugador1_rect = jugador1_img.get_rect()
+jugador1_rect.x = 200
+jugador1_rect.y = 400
+
+jugador2_rect = jugador2_img.get_rect()
+jugador2_rect.x = 970
+jugador2_rect.y = 400
+
+balon_rect = balon_img.get_rect()
+balon_rect.x = 600
+balon_rect.y = 450
+
+# Banderas del juego
+jugador1_salto = False
+jugador2_salto = False
+jugador1_colision = False
+jugador2_colision = False
+
+# Establecer las variables del juego
+cont_jugador1 = 0
+cont_jugador2 = 0
+text1 = font.render("Frionel: " + str(cont_jugador1), True, (255, 255, 255))
+text2 = font.render("Penaldo: " + str(cont_jugador2), True, (255, 255, 255))
+limite_der = 1100
+limite_izq = 90
+jugador1_y0 = 400
+jugador2_y0 = 400
+balon_x0 = 600
+balon_y0 = 450
+
+max_salto = 40.0
+g = 9.8
+theta = 90.0
+v0 = 80.0
+t1_salto = 0.0
+t2_salto = 0.0
+t_balon = 0.0
+
+jugador1_vel = 2.0
+jugador2_vel = 2.0
+
+v0x = v0 * np.cos(np.deg2rad(theta))
+v0y = v0 * np.sin(np.deg2rad(theta))
+
+# Travesaños de las porterias
+palo1 = pygame.Rect(porteria1_rect.x, porteria1_rect.y, porteria1_rect.width, 5)
+pygame.draw.rect(screen, (255, 0, 0), palo1, 2)
+palo2 = pygame.Rect(porteria2_rect.x, porteria2_rect.y, porteria2_rect.width, 5)
+pygame.draw.rect(screen, (255, 0, 0), palo2, 2)
+red1 = pygame.Rect(porteria1_rect.x+80, porteria1_rect.y+30, 20, porteria1_rect.height-30)
+pygame.draw.rect(screen, (255, 0, 0), red1, 2)
+red2 = pygame.Rect(porteria2_rect.x+100, porteria2_rect.y+30, 20, porteria2_rect.height-30)
+pygame.draw.rect(screen, (255, 0, 0), red2, 2)
+pygame.display.update()
+
+# Establecer el ciclo de juego
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    
+    # Mover jugadores
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_a]:
+        if jugador1_rect.x > limite_izq:
+            jugador1_rect.x -= jugador1_vel
+    elif keys[pygame.K_d]:
+        if jugador1_rect.x < limite_der:
+            jugador1_rect.x += jugador1_vel
+    if keys[pygame.K_w]:
+        if ~jugador1_salto:
+            jugador1_vel = 1.0
+            jugador1_salto = ~jugador1_salto
+    if keys[pygame.K_LEFT]:
+        if jugador2_rect.x > limite_izq:
+            jugador2_rect.x -= jugador2_vel
+    elif keys[pygame.K_RIGHT]:
+        if jugador2_rect.x < limite_der:
+            jugador2_rect.x += jugador2_vel
+    if keys[pygame.K_UP]:
+        if ~jugador2_salto:
+            jugador2_vel = 1.0
+            jugador2_salto = ~jugador2_salto
+
+    # Salto de los jugadores
+    if jugador1_salto:
+        t1_salto += 0.04
+        jugador1_rect.y = jugador1_y0 - max_salto * t1_salto + 0.5 * g * t1_salto**2
+        if jugador1_rect.y > 400:
+            t1_salto = 0.0
+            jugador1_vel = 2.0
+            jugador1_salto = ~jugador1_salto
+    
+    if jugador2_salto:
+        t2_salto += 0.04
+        jugador2_rect.y = jugador2_y0 - max_salto * t2_salto + 0.5 * g * t2_salto**2
+        if jugador2_rect.y > 400:
+            t2_salto = 0.0
+            jugador2_vel = 2.0
+            jugador2_salto = ~jugador2_salto
+
+    # Movimiento del balon
+    t_balon += 0.04
+    balon_rect.x = balon_x0 + v0x * t_balon
+    balon_rect.y = balon_y0 - v0y * t_balon + 0.5 * g * t_balon**2
+
+    # Colisiones con las paredes
+    if balon_rect.bottom > 500 or balon_rect.top < 0:
+        t_balon = 0.0
+        v0y *= -1
+        balon_x0 = balon_rect.x
+        balon_y0 = balon_rect.y
+    elif balon_rect.left < 0 or balon_rect.right > 1280:
+        t_balon = 0.0
+        v0x *= -1
+        balon_x0 = balon_rect.x
+        balon_y0 = balon_rect.y
+    
+    # Colisiones con el travesaño
+    if balon_rect.colliderect(palo1):
+        if balon_rect.x <= palo1.right:
+            t_balon = 0.0
+            v0y *= -1
+            balon_x0 = balon_rect.x
+            balon_y0 = balon_rect.y
+        else:
+            t_balon = 0.0
+            v0y *= -1
+            if v0x < 0:
+                v0x *= -1
+            balon_x0 = balon_rect.x
+            balon_y0 = balon_rect.y
+    elif balon_rect.colliderect(palo2):
+        if balon_rect.x >= palo2.left:
+            t_balon = 0.0
+            v0y *= -1
+            balon_x0 = balon_rect.x
+            balon_y0 = balon_rect.y
+        else:
+            t_balon = 0.0
+            v0y *= -1
+            if v0x > 0:
+                v0x *= -1
+            balon_x0 = balon_rect.x
+            balon_y0 = balon_rect.y
+    
+    # Colisiones con la red
+    if balon_rect.colliderect(red1):
+        cont_jugador2 += 1
+        text2 = font.render("Penaldo: " + str(cont_jugador2), True, (255, 255, 255))
+        t_balon = 0.0
+        t1_salto = 0.0
+        t2_salto = 0.0
+        theta = 90.0
+        v0x = v0 * np.cos(np.deg2rad(theta))
+        v0y = v0 * np.sin(np.deg2rad(theta))
+        balon_rect.x = 600
+        balon_rect.y = 450
+        balon_x0 = balon_rect.x
+        balon_y0 = balon_rect.y
+        jugador1_rect.x = 200
+        jugador1_rect.y = 400
+        jugador2_rect.x = 970
+        jugador2_rect.y = 400
+    elif balon_rect.colliderect(red2):
+        cont_jugador1 += 1
+        text1 = font.render("Frionel: " + str(cont_jugador1), True, (255, 255, 255))
+        t_balon = 0.0
+        t1_salto = 0.0
+        t2_salto = 0.0
+        theta = 90.0
+        v0x = v0 * np.cos(np.deg2rad(theta))
+        v0y = v0 * np.sin(np.deg2rad(theta))
+        balon_rect.x = 600
+        balon_rect.y = 450
+        balon_x0 = balon_rect.x
+        balon_y0 = balon_rect.y
+        jugador1_rect.x = 200
+        jugador1_rect.y = 400
+        jugador2_rect.x = 970
+        jugador2_rect.y = 400
+    
+    # Coliciones con los jugadores
+    if balon_rect.colliderect(jugador1_rect):
+        t_balon = 0.0
+        balon_x0 = balon_rect.x
+        balon_y0 = balon_rect.y
+        c1 = jugador1_rect.y - balon_rect.y
+        c2 = balon_rect.x - jugador1_rect.x
+        theta = np.arctan(c1/c2)
+        if c2 > 0:
+            v0x = v0 * np.cos(theta)
+            v0y = v0 * np.sin(theta)
+        else:
+            v0x = v0 * np.cos(-theta + np.pi/2)
+            v0y = v0 * np.sin(-theta + np.pi/2)
+
+    if balon_rect.colliderect(jugador2_rect):
+        t_balon = 0.0
+        balon_x0 = balon_rect.x
+        balon_y0 = balon_rect.y
+        c1 = jugador2_rect.y - balon_rect.y
+        c2 = jugador2_rect.x - balon_rect.x
+        theta = np.arctan(c1/c2)
+        if c2 > 0:
+            v0x = -v0 * np.cos(theta)
+            v0y = v0 * np.sin(theta)
+        else:
+            v0x = -v0 * np.cos(-theta + np.pi/2)
+            v0y = v0 * np.sin(-theta + np.pi/2)
+
+
+    # Dibujar objetos
+    screen.blit(fondo_img, (0, 0))
+    screen.blit(jugador1_img, jugador1_rect)
+    screen.blit(jugador2_img, jugador2_rect)
+    screen.blit(balon_img, balon_rect)
+    screen.blit(porteria1_img, porteria1_rect)
+    screen.blit(porteria2_img, porteria2_rect)
+    screen.blit(text1, (0, 0))
+    screen.blit(text2, (0, 20))
+
+    # Actualizar pantalla
+    pygame.display.flip()
