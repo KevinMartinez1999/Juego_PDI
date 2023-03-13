@@ -18,6 +18,7 @@ jugador2_img = pygame.image.load('images/jugador2.png')
 balon_img = pygame.image.load('images/balon.png')
 porteria1_img = pygame.image.load('images/porteria1.png')
 porteria2_img = pygame.image.load('images/porteria2.png')
+gol_image = pygame.image.load("images/gol.png")
 
 # Redimensionar imagenes
 fondo_img = pygame.transform.scale(fondo_img, tam_screen)
@@ -48,11 +49,14 @@ balon_rect = balon_img.get_rect()
 balon_rect.x = 600
 balon_rect.y = 450
 
+gol_rect = gol_image.get_rect()
+gol_rect.x = 360
+gol_rect.y = 70
+
 # Banderas del juego
 jugador1_salto = False
 jugador2_salto = False
-jugador1_colision = False
-jugador2_colision = False
+pause = False
 
 # Establecer las variables del juego
 cont_jugador1 = 0
@@ -185,8 +189,16 @@ while running:
     
     # Colisiones con la red
     if balon_rect.colliderect(red1):
+        # Aumentar contador de gol
         cont_jugador2 += 1
         text2 = font.render("Penaldo: " + str(cont_jugador2), True, (255, 255, 255))
+
+        # Mostrar animacion de gol
+        screen.blit(gol_image, gol_rect)
+        pygame.display.update()
+        pygame.time.delay(1000)
+
+        # Restablecer variables
         t_balon = 0.0
         t1_salto = 0.0
         t2_salto = 0.0
@@ -202,8 +214,16 @@ while running:
         jugador2_rect.x = 970
         jugador2_rect.y = 400
     elif balon_rect.colliderect(red2):
+        # Aumentar contador de gol
         cont_jugador1 += 1
         text1 = font.render("Frionel: " + str(cont_jugador1), True, (255, 255, 255))
+
+        # Mostrar animacion de gol
+        screen.blit(gol_image, gol_rect)
+        pygame.display.update()
+        pygame.time.delay(1000)
+
+        # Restablecer variables
         t_balon = 0.0
         t1_salto = 0.0
         t2_salto = 0.0
