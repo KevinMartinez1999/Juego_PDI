@@ -56,7 +56,10 @@ gol_rect.y = 70
 # Banderas del juego
 jugador1_salto = False
 jugador2_salto = False
-pause = False
+palo1_colision = False
+palo2_colision = False
+jugador1_colision = False
+jugador2_colision = False
 
 # Establecer las variables del juego
 cont_jugador1 = 0
@@ -70,7 +73,7 @@ jugador2_y0 = 400
 balon_x0 = 600
 balon_y0 = 450
 
-max_salto = 40.0
+max_salto = 35.0
 g = 9.8
 theta = 90.0
 v0 = 80.0
@@ -85,13 +88,13 @@ v0x = v0 * np.cos(np.deg2rad(theta))
 v0y = v0 * np.sin(np.deg2rad(theta))
 
 # Travesaños de las porterias
-palo1 = pygame.Rect(porteria1_rect.x, porteria1_rect.y, porteria1_rect.width, 5)
+palo1 = pygame.Rect(porteria1_rect.x, porteria1_rect.y, porteria1_rect.width, 20)
 pygame.draw.rect(screen, (255, 0, 0), palo1, 2)
-palo2 = pygame.Rect(porteria2_rect.x, porteria2_rect.y, porteria2_rect.width, 5)
+palo2 = pygame.Rect(porteria2_rect.x, porteria2_rect.y, porteria2_rect.width, 20)
 pygame.draw.rect(screen, (255, 0, 0), palo2, 2)
-red1 = pygame.Rect(porteria1_rect.x+80, porteria1_rect.y+30, 20, porteria1_rect.height-30)
+red1 = pygame.Rect(porteria1_rect.x+80, porteria1_rect.y+50, 20, porteria1_rect.height-50)
 pygame.draw.rect(screen, (255, 0, 0), red1, 2)
-red2 = pygame.Rect(porteria2_rect.x+100, porteria2_rect.y+30, 20, porteria2_rect.height-30)
+red2 = pygame.Rect(porteria2_rect.x+100, porteria2_rect.y+50, 20, porteria2_rect.height-50)
 pygame.draw.rect(screen, (255, 0, 0), red2, 2)
 pygame.display.update()
 
@@ -161,31 +164,39 @@ while running:
     
     # Colisiones con el travesaño
     if balon_rect.colliderect(palo1):
-        if balon_rect.x <= palo1.right:
-            t_balon = 0.0
-            v0y *= -1
-            balon_x0 = balon_rect.x
-            balon_y0 = balon_rect.y
+        if ~palo1_colision:
+            if balon_rect.x <= palo1.right:
+                t_balon = 0.0
+                v0y *= -1
+                balon_x0 = balon_rect.x
+                balon_y0 = balon_rect.y
+            else:
+                t_balon = 0.0
+                v0y *= -1
+                if v0x < 0:
+                    v0x *= -1
+                balon_x0 = balon_rect.x
+                balon_y0 = balon_rect.y
+            palo1_colision = ~palo1_colision
         else:
-            t_balon = 0.0
-            v0y *= -1
-            if v0x < 0:
-                v0x *= -1
-            balon_x0 = balon_rect.x
-            balon_y0 = balon_rect.y
+            palo1_colision = ~palo1_colision
     elif balon_rect.colliderect(palo2):
-        if balon_rect.x >= palo2.left:
-            t_balon = 0.0
-            v0y *= -1
-            balon_x0 = balon_rect.x
-            balon_y0 = balon_rect.y
+        if ~palo2_colision:
+            if balon_rect.x >= palo2.left:
+                t_balon = 0.0
+                v0y *= -1
+                balon_x0 = balon_rect.x
+                balon_y0 = balon_rect.y
+            else:
+                t_balon = 0.0
+                v0y *= -1
+                if v0x > 0:
+                    v0x *= -1
+                balon_x0 = balon_rect.x
+                balon_y0 = balon_rect.y
+            palo2_colision = ~palo2_colision
         else:
-            t_balon = 0.0
-            v0y *= -1
-            if v0x > 0:
-                v0x *= -1
-            balon_x0 = balon_rect.x
-            balon_y0 = balon_rect.y
+            palo2_colision = ~palo2_colision
     
     # Colisiones con la red
     if balon_rect.colliderect(red1):
@@ -241,32 +252,56 @@ while running:
     
     # Coliciones con los jugadores
     if balon_rect.colliderect(jugador1_rect):
-        t_balon = 0.0
-        balon_x0 = balon_rect.x
-        balon_y0 = balon_rect.y
-        c1 = jugador1_rect.y - balon_rect.y
-        c2 = balon_rect.x - jugador1_rect.x
-        theta = np.arctan(c1/c2)
-        if c2 > 0:
-            v0x = v0 * np.cos(theta)
-            v0y = v0 * np.sin(theta)
+        if ~jugador1_colision:
+            t_balon = 0.0
+            balon_x0 = balon_rect.x
+            balon_y0 = balon_rect.y
+            c1 = jugador1_rect.y - balon_rect.y
+            c2 = balon_rect.x - jugador1_rect.x
+            theta = np.arctan(c1/c2)
+            if c2 > 0:
+                if c1 > 0:
+                    v0x = v0 * np.cos(theta)
+                    v0y = v0 * np.sin(theta)
+                else:
+                    v0x = v0 * np.cos(-theta)
+                    v0y = v0 * np.sin(-theta)
+            else:
+                if c1 > 0:
+                    v0x = v0 * np.cos(-theta + np.pi/2)
+                    v0y = v0 * np.sin(-theta + np.pi/2)
+                else:
+                    v0x = v0 * np.cos(theta + np.pi/2)
+                    v0y = v0 * np.sin(theta + np.pi/2)
+            jugador1_colision = ~jugador1_colision
         else:
-            v0x = v0 * np.cos(-theta + np.pi/2)
-            v0y = v0 * np.sin(-theta + np.pi/2)
+            jugador1_colision = ~jugador1_colision
 
     if balon_rect.colliderect(jugador2_rect):
-        t_balon = 0.0
-        balon_x0 = balon_rect.x
-        balon_y0 = balon_rect.y
-        c1 = jugador2_rect.y - balon_rect.y
-        c2 = jugador2_rect.x - balon_rect.x
-        theta = np.arctan(c1/c2)
-        if c2 > 0:
-            v0x = -v0 * np.cos(theta)
-            v0y = v0 * np.sin(theta)
+        if ~jugador2_colision:
+            t_balon = 0.0
+            balon_x0 = balon_rect.x
+            balon_y0 = balon_rect.y
+            c1 = jugador2_rect.y - balon_rect.y
+            c2 = jugador2_rect.x - balon_rect.x
+            theta = np.arctan(c1/c2)
+            if c2 > 0:
+                if c1 > 0:
+                    v0x = -v0 * np.cos(theta)
+                    v0y = v0 * np.sin(theta)
+                else:
+                    v0x = -v0 * np.cos(-theta)
+                    v0y = v0 * np.sin(-theta)
+            else:
+                if c1 > 0:
+                    v0x = -v0 * np.cos(-theta + np.pi/2)
+                    v0y = v0 * np.sin(-theta + np.pi/2)
+                else:
+                    v0x = -v0 * np.cos(theta + np.pi/2)
+                    v0y = v0 * np.sin(theta + np.pi/2)
+            jugador2_colision = ~jugador2_colision
         else:
-            v0x = -v0 * np.cos(-theta + np.pi/2)
-            v0y = v0 * np.sin(-theta + np.pi/2)
+            jugador2_colision = ~jugador2_colision
 
 
     # Dibujar objetos
